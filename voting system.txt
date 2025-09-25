@@ -1,145 +1,124 @@
-import java.util.*;
+import java.util.Scanner;
 
-// Abstract Class
-abstract class Person {
-    private String id;
-    private String name;
+class Candidate {
+    String name;
+    int votes;
 
-    public Person(String id, String name) {
-        this.id = id;
+    Candidate(String name) {
         this.name = name;
+        this.votes = 0;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
+    void vote() {
+        votes++;
     }
 }
 
-// Voter Class with Encapsulation
-class Voter extends Person {
-    private boolean hasVoted;
+public class EVotingSystem {
+    static Candidate[] candidates;
+    static String[] votedUsers;  // to prevent multiple votes
+    static int userCount = 0;
 
-    public Voter(String id, String name) {
-        super(id, name);
-        this.hasVoted = false;
-    }
-
-    public boolean hasVoted() {
-        return hasVoted;
-    }
-
-    public void vote() {
-        hasVoted = true;
-    }
-}
-
-// Candidate Class with Inheritance
-class Candidate extends Person {
-    private int voteCount;
-
-    public Candidate(String id, String name) {
-        super(id, name);
-        this.voteCount = 0;
-    }
-
-    public void receiveVote() {
-        voteCount++;
-    }
-
-    public int getVoteCount() {
-        return voteCount;
-    }
-}
-
-// Main Voting System Class
-public class VotingSystem {
-    // Using Collections
-    private final Map<String, Voter> voters = new HashMap<>();
-    private final Map<String, Candidate> candidates = new HashMap<>();
-
-    // Static variable
-    private static int totalVotes = 0;
-
-    // Register a voter
-    public void registerVoter(String id, String name) {
-        if (!voters.containsKey(id)) {
-            voters.put(id, new Voter(id, name));
-        }
-    }
-
-    // Register a candidate
-    public void registerCandidate(String id, String name) {
-        if (!candidates.containsKey(id)) {
-            candidates.put(id, new Candidate(id, name));
-        }
-    }
-
-    // Cast a vote
-    public void castVote(String voterId, String candidateId) throws Exception {
-        Voter voter = voters.get(voterId);
-        Candidate candidate = candidates.get(candidateId);
-
-        if (voter == null) throw new Exception("Voter not found.");
-        if (candidate == null) throw new Exception("Candidate not found.");
-        if (voter.hasVoted()) throw new Exception("Voter has already voted.");
-
-        voter.vote();
-        candidate.receiveVote();
-        totalVotes++;
-    }
-
-    // Display Results
-    public void displayResults() {
-        System.out.println("\n=== Voting Results ===");
-        for (Candidate c : candidates.values()) {
-            System.out.println(c.getName() + ": " + c.getVoteCount() + " votes");
-        }
-        System.out.println("Total Votes Cast: " + totalVotes);
-    }
-
-    // Main Method with Sample Execution
     public static void main(String[] args) {
-        VotingSystem vs = new VotingSystem();
-
-        // Registering candidates
-        vs.registerCandidate("C1", "Alice");
-        vs.registerCandidate("C2", "Bob");
-
-        // Registering voters
-        vs.registerVoter("V1", "John");
-        vs.registerVoter("V2", "Emma");
-
         Scanner sc = new Scanner(System.in);
 
-        System.out.println("=== Voting System ===");
-        for (int i = 0; i < 2; i++) {
-            try {
-                System.out.print("\nEnter Voter ID: ");
-                String voterId = sc.nextLine();
-                System.out.print("Enter Candidate ID to vote for: ");
-                String candidateId = sc.nextLine();
-                vs.castVote(voterId, candidateId);
-                System.out.println("Vote cast successfully!");
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+        // Step 1: Initialize Candidates
+        candidates = new Candidate[3];
+        candidates[0] = new Candidate("Alice");
+        candidates[1] = new Candidate("Bob");
+        candidates[2] = new Candidate("Charlie");
+
+        votedUsers = new String[100];
+
+        int choice;
+        do {
+            System.out.println("\n--- E-Voting System ---");
+            System.out.println("1. Vote");
+            System.out.println("2. View Vote Count");
+            System.out.println("3. Declare Winner");
+            System.out.println("4. Exit");
+            System.out.print("Enter your choice: ");
+            choice = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter your Voter ID: ");
+                    String voterId = sc.nextLine();
+
+                    if (hasVoted(voterId)) {
+                        System.out.println("You have already voted!");
+                    } else {
+                        displayCandidates();
+                        System.out.print("Enter candidate number to vote: ");
+                        int vote = sc.nextInt();
+                        sc.nextLine();
+
+                        if (vote >= 1 && vote <= candidates.length) {
+                            candidates[vote - 1].vote();
+                            votedUsers[userCount++] = voterId;
+                            System.out.println("Vote recorded successfully!");
+                        } else {
+                            System.out.println("Invalid candidate number.");
+                        }
+                    }
+                    break;
+
+                case 2:
+                    displayVoteCounts();
+                    break;
+
+                case 3:
+                    declareWinner();
+                    break;
+
+                case 4:
+                    System.out.println("Thank you for using E-Voting System.");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+
+        } while (choice != 4);
+
+        sc.close();
+    }
+
+    static void displayCandidates() {
+        System.out.println("Candidates:");
+        for (int i = 0; i < candidates.length; i++) {
+            System.out.println((i + 1) + ". " + candidates[i].name);
+        }
+    }
+
+    static void displayVoteCounts() {
+        System.out.println("\n--- Vote Count ---");
+        for (Candidate c : candidates) {
+            System.out.println(c.name + ": " + c.votes + " vote(s)");
+        }
+    }
+
+    static void declareWinner() {
+        int maxVotes = -1;
+        String winner = "No winner";
+
+        for (Candidate c : candidates) {
+            if (c.votes > maxVotes) {
+                maxVotes = c.votes;
+                winner = c.name;
             }
         }
 
-        vs.displayResults();
-
-        // Suggesting Garbage Collection
-        vs = null;
-        System.gc(); // Calling GC (note: not guaranteed to run immediately)
+        System.out.println("\nWinner is: " + winner + " with " + maxVotes + " votes!");
     }
 
-    // Finalizer method (Not recommended in production, just for demo)
-    @Override
-    protected void finalize() throws Throwable {
-        System.out.println("Garbage collector called on VotingSystem");
+    static boolean hasVoted(String voterId) {
+        for (int i = 0; i < userCount; i++) {
+            if (votedUsers[i].equalsIgnoreCase(voterId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
-
