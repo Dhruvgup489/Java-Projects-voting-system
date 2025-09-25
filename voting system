@@ -1,0 +1,144 @@
+import java.util.*;
+
+// Abstract Class
+abstract class Person {
+    private String id;
+    private String name;
+
+    public Person(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+
+// Voter Class with Encapsulation
+class Voter extends Person {
+    private boolean hasVoted;
+
+    public Voter(String id, String name) {
+        super(id, name);
+        this.hasVoted = false;
+    }
+
+    public boolean hasVoted() {
+        return hasVoted;
+    }
+
+    public void vote() {
+        hasVoted = true;
+    }
+}
+
+// Candidate Class with Inheritance
+class Candidate extends Person {
+    private int voteCount;
+
+    public Candidate(String id, String name) {
+        super(id, name);
+        this.voteCount = 0;
+    }
+
+    public void receiveVote() {
+        voteCount++;
+    }
+
+    public int getVoteCount() {
+        return voteCount;
+    }
+}
+
+// Main Voting System Class
+public class VotingSystem {
+    // Using Collections
+    private final Map<String, Voter> voters = new HashMap<>();
+    private final Map<String, Candidate> candidates = new HashMap<>();
+
+    // Static variable
+    private static int totalVotes = 0;
+
+    // Register a voter
+    public void registerVoter(String id, String name) {
+        if (!voters.containsKey(id)) {
+            voters.put(id, new Voter(id, name));
+        }
+    }
+
+    // Register a candidate
+    public void registerCandidate(String id, String name) {
+        if (!candidates.containsKey(id)) {
+            candidates.put(id, new Candidate(id, name));
+        }
+    }
+
+    // Cast a vote
+    public void castVote(String voterId, String candidateId) throws Exception {
+        Voter voter = voters.get(voterId);
+        Candidate candidate = candidates.get(candidateId);
+
+        if (voter == null) throw new Exception("Voter not found.");
+        if (candidate == null) throw new Exception("Candidate not found.");
+        if (voter.hasVoted()) throw new Exception("Voter has already voted.");
+
+        voter.vote();
+        candidate.receiveVote();
+        totalVotes++;
+    }
+
+    // Display Results
+    public void displayResults() {
+        System.out.println("\n=== Voting Results ===");
+        for (Candidate c : candidates.values()) {
+            System.out.println(c.getName() + ": " + c.getVoteCount() + " votes");
+        }
+        System.out.println("Total Votes Cast: " + totalVotes);
+    }
+
+    // Main Method with Sample Execution
+    public static void main(String[] args) {
+        VotingSystem vs = new VotingSystem();
+
+        // Registering candidates
+        vs.registerCandidate("C1", "Alice");
+        vs.registerCandidate("C2", "Bob");
+
+        // Registering voters
+        vs.registerVoter("V1", "John");
+        vs.registerVoter("V2", "Emma");
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("=== Voting System ===");
+        for (int i = 0; i < 2; i++) {
+            try {
+                System.out.print("\nEnter Voter ID: ");
+                String voterId = sc.nextLine();
+                System.out.print("Enter Candidate ID to vote for: ");
+                String candidateId = sc.nextLine();
+                vs.castVote(voterId, candidateId);
+                System.out.println("Vote cast successfully!");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+
+        vs.displayResults();
+
+        // Suggesting Garbage Collection
+        vs = null;
+        System.gc(); // Calling GC (note: not guaranteed to run immediately)
+    }
+
+    // Finalizer method (Not recommended in production, just for demo)
+    @Override
+    protected void finalize() throws Throwable {
+        System.out.println("Garbage collector called on VotingSystem");
+    }
+}
